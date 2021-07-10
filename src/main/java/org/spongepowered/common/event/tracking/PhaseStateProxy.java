@@ -37,6 +37,7 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.transaction.BlockTransactionReceipt;
 import org.spongepowered.api.block.transaction.Operation;
 import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.event.Cause;
@@ -156,12 +157,11 @@ public interface PhaseStateProxy<C extends PhaseContext<C>> {
     /**
      * Performs any necessary custom logic after the provided {@link BlockSnapshot}
      * {@link Transaction} has taken place.
-     *
-     * @param blockChange The block change performed
-     * @param snapshotTransaction The transaction of the old and new snapshots
+     *  @param blockChange The block change performed
+     * @param receipt The transaction of the old and new snapshots
      */
-    default void postBlockTransactionApplication(final BlockChange blockChange, final Transaction<? extends BlockSnapshot> snapshotTransaction) {
-        this.getState().postBlockTransactionApplication(blockChange, snapshotTransaction, this.asContext());
+    default void postBlockTransactionApplication(final BlockChange blockChange, final BlockTransactionReceipt receipt) {
+        this.getState().postBlockTransactionApplication(this.asContext(), blockChange, receipt);
     }
 
     /**
@@ -417,7 +417,8 @@ public interface PhaseStateProxy<C extends PhaseContext<C>> {
         final BlockState currentState, final SpongeBlockSnapshot snapshot,
         final Block originalBlock
     ) {
-        return this.getState().associateBlockChangeWithSnapshot(this.asContext(), newState, newBlock,currentState, snapshot, originalBlock);
+        return this.getState().associateBlockChangeWithSnapshot(this.asContext(), newState, newBlock,currentState,
+            originalBlock);
     }
 
     /**
@@ -484,8 +485,8 @@ public interface PhaseStateProxy<C extends PhaseContext<C>> {
         this.getState().populateLootContext(this.asContext(), lootBuilder);
     }
 
-    default Operation getBlockOperation(final SpongeBlockSnapshot original, final BlockChange blockChange) {
-        return this.getState().getBlockOperation(original, blockChange);
+    default Operation getBlockOperation(final SpongeBlockSnapshot original, final SpongeBlockSnapshot result) {
+        return this.getState().getBlockOperation(this.asContext(), original, result);
     }
 
     default void foldContextForThread(final TickTaskBridge returnValue) {
